@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.NoHttpResponseException;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -109,6 +110,7 @@ public class Main {
                     System.out.println(userServiceResponse);
 
                 } else if(pathSegments.length == 3) { ///user/shutdown
+                    System.out.println("USER RESTART");
                     String command = pathSegments[2]; // this would be "shutdown"
 
                     String userShutdownUrl = userUrl + "user/" + command;
@@ -157,6 +159,7 @@ public class Main {
                     sendValidResponse(exchange, productServiceResponse);
                 }
                 else if(pathSegments.length == 3) { ///user/shutdown
+                    System.out.println("PRODUCT RESTART");
                     String command = pathSegments[2]; // this would be "shutdown"
 
                     String productShutdownUrl = productUrl + "product/" + command;
@@ -164,7 +167,9 @@ public class Main {
                     HttpResponse productShutdownResponse = handleGetRequest(productShutdownUrl);
                     sendValidResponse(exchange, productShutdownResponse);
 
-                    iscsShutdown();
+                    if(command == "shutdown"){
+                        iscsShutdown();
+                    }
                 }
             }
             else {
@@ -177,17 +182,17 @@ public class Main {
 
     public static void iscsShutdown() throws IOException {
 
-           System.out.println("IN SHUTDOWN");
-           System.out.println("Shutdown command received. Initiating shutdown...");
+        System.out.println("IN SHUTDOWN");
+        System.out.println("Shutdown command received. Initiating shutdown...");
 
-           // Schedule the shutdown to allow time for the response to be sent
-           new Timer().schedule(new TimerTask() {
-               @Override
-               public void run() {
-                   System.out.println("Successfully shutdown ISCS");
-                   System.exit(0);
-               }
-           }, 5000); // Delay for 5 seconds
+        // Schedule the shutdown to allow time for the response to be sent
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Successfully shutdown ISCS");
+                System.exit(0);
+            }
+        }, 5000); // Delay for 5 seconds
     }
 
     static JSONObject getObject(HttpExchange exchange) throws IOException {
@@ -211,6 +216,9 @@ public class Main {
         HttpGet getRequest = new HttpGet(url);
         try {
             return httpClient.execute(getRequest);
+        } catch (NoHttpResponseException e) {
+            System.err.println("Restart Intiated" + url);
+            return null; // or construct a specific HttpResponse indicating the error
         } catch (HttpHostConnectException e) {
             System.err.println("UserService has gracefully shutdown" + url);
             return null; // or construct a specific HttpResponse indicating the error

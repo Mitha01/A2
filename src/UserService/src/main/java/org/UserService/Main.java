@@ -34,6 +34,17 @@ public class Main {
         // Setup server and database connection
         setupServer();
         setupDatabase();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                try (Statement statement = connection.createStatement()) {
+                    statement.execute("DELETE FROM Users"); // Adjust table name and query as necessary
+                    statement.execute("DELETE FROM Purchases"); // Adjust table name and query as necessary
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to clear users and purchases information: " + e.getMessage());
+            }
+        }));
     }
 
     //SETTING UP SERVER FOR USER SERVICE
@@ -333,7 +344,6 @@ public class Main {
             else if(pathSegments.length == 3) { ///user/shutdown
                 command = pathSegments[2]; // this would be "shutdown"
                 System.out.println("LENGTH IS 2");
-
             }
 
             if(command.equals("get")){
@@ -362,10 +372,27 @@ public class Main {
                         System.exit(0);
                     }
                 }, 5000); // Delay for 5 seconds
+            } else if(command.equals("restart")) {
+                try (Statement statement = connection.createStatement()) {
+
+                    // Send a response before initiating the shutdown
+                    String responseText = "Restart Initiated";
+                    exchange.sendResponseHeaders(200, responseText.getBytes().length);
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(responseText.getBytes());
+                    os.close();
+
+                    statement.execute("DELETE FROM Users"); // Adjust table name and query as necessary
+                    statement.execute("DELETE FROM Purchases"); // Adjust table name and query as necessary
+
+
+                }
+                 catch (SQLException e) {
+                    System.err.println("Failed to clear users and purchases information: " + e.getMessage());
+                }
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            System.out.println("HERERE");
             System.out.println("500: Internal Server Error");
             exchange.sendResponseHeaders(500, -1);
         } finally {

@@ -30,10 +30,23 @@ public class Main {
 
     public static Connection connection = null;
 
+
     public static void main(String[] args)  {
         // Setup server and database connection
         setupServer();
         setupDatabase();
+
+    }
+    private static void shutDown(){
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                try (Statement statement = connection.createStatement()) {
+                    statement.execute("DELETE FROM Products"); // Adjust table name and query as necessary
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to clear users and purchases information: " + e.getMessage());
+            }
+        }));
     }
 
     //SETTING UP SERVER FOR PRODUCT SEVICE
@@ -330,24 +343,43 @@ public class Main {
                 exchange.close();
             }
         } else if(pathSegments.length == 3){
-            System.out.println("IN SHUTDOWN");
-            System.out.println("Shutdown command received. Initiating shutdown...");
+            if(pathSegments[2].equals("shutdown")){
+                System.out.println("Shutdown command received. Initiating shutdown...");
 
-            // Send a response before initiating the shutdown
-            String responseText = "ProductService has gracefully shutdown";
-            exchange.sendResponseHeaders(200, responseText.getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(responseText.getBytes());
-            os.close();
+                // Send a response before initiating the shutdown
+                String responseText = "ProductService has gracefully shutdown";
+                exchange.sendResponseHeaders(200, responseText.getBytes().length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(responseText.getBytes());
+                os.close();
 
-            // Schedule the shutdown to allow time for the response to be sent
-            new Timer().schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    System.out.println("Successfully shutdown ProductService");
-                    System.exit(0);
+                // Schedule the shutdown to allow time for the response to be sent
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        System.out.println("Successfully shutdown ProductService");
+                        System.exit(0);
+                    }
+                }, 5000); // Delay for 5 seconds
+            }
+
+            if (pathSegments[2].equals("restart")){
+                System.out.println("IN RESTART");
+
+                try (Statement statement = connection.createStatement()) {
+                    // Send a response before initiating the shutdown
+                    String responseText = "Restart Initiated";
+                    exchange.sendResponseHeaders(200, responseText.getBytes().length);
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(responseText.getBytes());
+                    os.close();
+
+                    statement.execute("DELETE FROM Products"); // Adjust table name and query as necessary
                 }
-            }, 5000); // Delay for 5 seconds
+                catch (SQLException e) {
+                    System.err.println("Failed to clear users and purchases information: " + e.getMessage());
+                }
+            }
         }
     }//end of handleGetRequest
 

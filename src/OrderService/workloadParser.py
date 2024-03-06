@@ -6,6 +6,28 @@ import requests
 import simplejson as json
 import subprocess
 
+shutdown_flag_file = "/Users/susmi/Desktop/SCHOOL/CSC301/a1/src/OrderService/shutdown_status.txt"
+
+def write_shutdown_status():
+    with open('shutdown_status.txt', 'w') as file:
+        file.write(1)
+
+def check_shutdown_flag():
+    if os.path.exists(shutdown_flag_file):
+        with open(shutdown_flag_file, "r") as file:
+            flag = file.read().strip()
+            return flag == "1"
+    return False
+
+def reset_shutdown_flag():
+    with open(shutdown_flag_file, "w") as file:
+        file.write("0")
+
+def start_iscs_service():
+    # Adjust the path to your JAR file
+    command = 'open -a Terminal "`pwd`"'
+    jar_path = "//Users/susmi/Desktop/SCHOOL/CSC301/a1/compiled/ISCS/ISCS-1.0-SNAPSHOT-jar-with-dependencies.jar"
+    subprocess.run(["osascript", "-e", f'tell application "Terminal" to do script "java -jar {jar_path}"'], cwd="/Users/susmi/Desktop/SCHOOL/CSC301/a1")
 
 def parse_order_line(line):
     parts = line.split()
@@ -171,19 +193,10 @@ def ResponseBody(response):
     print(f"{status_code}:{status_message}", response.text)
 
 
-def restart_services():
-    base_path = "/Users/susmi/Desktop/SCHOOL/CSC301/a1"
-    commands = [
-        "./runme.sh -c",
-    ]
-
-    for cmd in commands:
-        full_cmd = f"cd {base_path} && {cmd}"
-        print(f"Executing: {full_cmd}")
-        subprocess.run(full_cmd, shell=True, check=True)
-
 
 def main():
+    shutdown_flag = check_shutdown_flag()
+
     statusCode_messages = {200: "OK", 400: "Bad Request", 404:"Not Found", 405:"Not Allowed", 409:"Conflict", 500:"Internal Server Error"}
 
     # Construct the path to the config.json file
@@ -209,6 +222,15 @@ def main():
 
     for command in commands:
         response = ""
+
+        if command["service"] != "restart" and shutdown_flag:
+
+            restart_iscs_url_for_product = iscs_url + "/product/restart"
+            restart_iscs_url_for_user = iscs_url + "/user/restart"
+
+            response1 = session.get(restart_iscs_url_for_user)
+            response2 = session.get(restart_iscs_url_for_product)
+
         if command["service"] == "ORDER":
             del command["service"]
             print(order_url, command)
@@ -237,9 +259,7 @@ def main():
             ResponseBody(response)
 
         elif command["service"] == "shutdown":
-            response1 = " "
-            response2 = " "
-            response3 = " "
+            write_shutdown_status()
 
             shutdown_iscs_url_for_product = iscs_url + "/product/shutdown"
             shutdown_iscs_url_for_user = iscs_url + "/user/shutdown"
@@ -254,11 +274,18 @@ def main():
             return
 
         elif command["service"] == "restart":
-            print("HERE")
-            restart_services()
+            if shutdown_flag:
+                reset_shutdown_flag();
+                print('{"command": "restart"}, 200 OK status code')
+                return
+            else:
+                restart_iscs_url_for_product = iscs_url + "/product/restart"
+                restart_iscs_url_for_user = iscs_url + "/user/restart"
 
-
-
+                response1 = session.get(restart_iscs_url_for_user)
+                response2 = session.get(restart_iscs_url_for_product)
+                return
 
 if __name__ == "__main__":
     main()
+

@@ -69,7 +69,6 @@ public class Main {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
                     JSONObject jsonObject = getObject(exchange);
-                    System.out.println(jsonObject);
 
                     //String params = String.valueOf(jsonObject.getInt("user_id")) + "/" + String.valueOf(jsonObject.getInt("product_id")) + "/" + String.valueOf(jsonObject.getInt("qty"));
                     String userIscsUrl = iscsUrl + "user/get/" + jsonObject.getInt("user_id");
@@ -78,15 +77,8 @@ public class Main {
                     HttpResponse userResponse = handleGetRequest(userIscsUrl);
                     HttpResponse prodResponse = handleGetRequest(productIscsUrl);
 
-                    // System.out.println(prodResponse.getStatusLine().getStatusCode());
-
                     Boolean uR = (userResponse != null && userResponse.getStatusLine().getStatusCode() == 200);
                     Boolean pR = (prodResponse != null && prodResponse.getStatusLine().getStatusCode() == 200);
-
-                    System.out.println(jsonObject.getInt("user_id"));
-
-                    System.out.println(uR);
-                    System.out.println(pR);
 
                     if (uR && pR) {
                         JSONObject productUpdateObject = new JSONObject();
@@ -124,9 +116,6 @@ public class Main {
                         }
                     } else {
                         //check to prodResponse and userResponse for accurate response back
-                        System.out.println(uR);
-                        System.out.println(pR);
-                        String response = "Error in finding data";
                         exchange.sendResponseHeaders(404, response.length());
                         try (OutputStream os = exchange.getResponseBody()) {
                             os.write(response.getBytes(StandardCharsets.UTF_8));
@@ -146,7 +135,6 @@ public class Main {
         }
 
         private static void orderServiceShutdown(HttpExchange exchange) throws IOException {
-            System.out.println("IN SHUTDOWN");
             System.out.println("Shutdown command received. Initiating shutdown...");
 
             // Send a response before initiating the shutdown

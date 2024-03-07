@@ -87,14 +87,9 @@ public class Main {
                 sendValidResponse(exchange, postResponse);
 
             } else if ("GET".equals(exchange.getRequestMethod())) {
-                System.out.println("U - HANDLEGET");
                 String path = exchange.getRequestURI().getPath();
-                System.out.println(path);
                 String[] pathSegments = path.split("/");
 
-                System.out.println(pathSegments[0]);
-                System.out.println(pathSegments[1]);
-                System.out.println(pathSegments[2]);
 
                 // Assuming the path is in the format "/user/get/<id>"
                 if (pathSegments.length > 3) {
@@ -107,14 +102,11 @@ public class Main {
                     // Send a response back
                     sendValidResponse(exchange, userServiceResponse);
 
-                    System.out.println(userServiceResponse);
 
                 } else if(pathSegments.length == 3) { ///user/shutdown
-                    System.out.println("USER RESTART");
                     String command = pathSegments[2]; // this would be "shutdown"
 
                     String userShutdownUrl = userUrl + "user/" + command;
-                    System.out.println(userShutdownUrl);
                     HttpResponse userShutdownResponse = handleGetRequest(userShutdownUrl);
                     sendValidResponse(exchange, userShutdownResponse);
 
@@ -141,7 +133,6 @@ public class Main {
                 sendValidResponse(exchange, postResponse);
 
             }else if ("GET".equals(exchange.getRequestMethod())) {
-                System.out.println("P - HANDLEGET");
                 String path = exchange.getRequestURI().getPath();
                 String[] pathSegments = path.split("/");
 
@@ -149,8 +140,6 @@ public class Main {
                     String productId = pathSegments[2];  // Get the product ID
                     String qty = pathSegments[3]; //Get the qty number
 
-                    System.out.println(productId);
-                    System.out.println(qty);
 
                     String productGetUrl = productUrl + "product/" + productId + "/" + qty;
 
@@ -159,17 +148,12 @@ public class Main {
                     sendValidResponse(exchange, productServiceResponse);
                 }
                 else if(pathSegments.length == 3) { ///user/shutdown
-                    System.out.println("PRODUCT RESTART");
                     String command = pathSegments[2]; // this would be "shutdown"
 
-                    System.out.println(command);
-
                     String productShutdownUrl = productUrl + "product/" + command;
-                    System.out.println(productShutdownUrl);
                     HttpResponse productShutdownResponse = handleGetRequest(productShutdownUrl);
 
                     if(command.equals("shutdown")){
-                        System.out.println("IN SHUTDOWN");
                         iscsShutdown();
                     }
                     sendValidResponse(exchange, productShutdownResponse);
@@ -184,7 +168,6 @@ public class Main {
     }
 
     public static void iscsShutdown() throws IOException {
-        System.out.println("IN SHUTDOWN");
         System.out.println("Shutdown command received. Initiating shutdown...");
 
         // Schedule the shutdown to allow time for the response to be sent
@@ -213,7 +196,6 @@ public class Main {
     }
 
     private static HttpResponse handleGetRequest(String url) throws IOException {
-        System.out.println("HANDLEGETREQUEST");
         httpClient = HttpClients.createDefault();
         HttpGet getRequest = new HttpGet(url);
         try {
@@ -257,7 +239,6 @@ public class Main {
             // Handle exception or log as needed
         }
         int statusCode = response.getStatusLine().getStatusCode();
-        System.out.println("status code: " + statusCode + " body from user/product: " + responseString);
         exchange.sendResponseHeaders(statusCode, responseString.getBytes(StandardCharsets.UTF_8).length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(responseString.getBytes(StandardCharsets.UTF_8));

@@ -211,7 +211,6 @@ public class Main {
                         return;
                     }
                     if (id != null) {
-                        System.out.println("HERE - UPDDATE");
                         int currentQty = getCurrentProductQty(id);
                         Integer orderQty = 0;
 
@@ -227,7 +226,6 @@ public class Main {
 
                         if (orderQty != null && currentQty >= orderQty) {
                             orderQty = currentQty - orderQty;
-                            System.out.println(orderQty);
                         }
 
                         StringBuilder sqlBuilder = new StringBuilder("UPDATE Products SET ");
@@ -328,9 +326,6 @@ public class Main {
         String path = exchange.getRequestURI().getPath();
         String [] pathSegments = path.split("/");
 
-        System.out.println(pathSegments);
-        System.out.println(pathSegments.length);
-
         if(pathSegments.length > 3){
             try {
                 int id = Integer.parseInt(pathSegments[2]);
@@ -367,8 +362,6 @@ public class Main {
             }
 
             if (pathSegments[2].equals("restart")){
-                System.out.println("IN RESTART");
-
                 try (Statement statement = connection.createStatement()) {
                     // Send a response before initiating the shutdown
                     String responseText = "Restart Initiated";
@@ -387,9 +380,6 @@ public class Main {
     }//end of handleGetRequest
 
     private static void sendProductInfo(HttpExchange exchange, int id, int orderQty, int currentQty) throws IOException{
-        System.out.println("P_ID" + id); // This will automatically convert id to String
-        System.out.println("O_QTY" + orderQty); // This will automatically convert orderQty to String
-
         Map<String, Object> productData = new HashMap<>();
 
         if (checkProductExists(id)) {
@@ -460,7 +450,7 @@ public class Main {
         String responseString = jsonResponse.toString();
 
         exchange.getResponseHeaders().set("Content-Type", "application/json");
-        System.out.println("200 " + responseString);
+        System.out.println(statusCode + responseString);
         exchange.sendResponseHeaders(statusCode, responseString.getBytes(StandardCharsets.UTF_8).length);
 
         try (OutputStream os = exchange.getResponseBody()) {

@@ -324,27 +324,19 @@ public class Main {
             String command = "";
             int id = 1;
 
-            System.out.println(pathSegments);
-
             if(pathSegments.length > 3) {
                 command = pathSegments[2];
                 id = Integer.parseInt(pathSegments[3]);
-                System.out.println("LENGTH IS 3");
             }
             else if(pathSegments.length == 3) { ///user/shutdown
                 command = pathSegments[2]; // this would be "shutdown"
-                System.out.println("LENGTH IS 2");
             }
 
             if(command.equals("get")){
-                System.out.println("IN GETTT");
-                System.out.println(command);
-                System.out.println(id);
                 sendUserInfo(exchange, id);
             } else if(command.equals("purchased")){
                 sendPurchaseInfo(exchange, id);
             } else if(command.equals("shutdown")){
-                System.out.println("IN SHUTDOWN");
                 System.out.println("Shutdown command received. Initiating shutdown...");
 
                 // Send a response before initiating the shutdown
@@ -382,7 +374,6 @@ public class Main {
                 }
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             System.out.println("500: Internal Server Error");
             exchange.sendResponseHeaders(500, -1);
         } finally {
@@ -415,7 +406,6 @@ public class Main {
             }
             jsonBuilder.append("}");
             String jsonString = jsonBuilder.toString();
-            System.out.println(jsonString); // Optional: Print the JSON-like string
 
             // Directly sending jsonString as the response
             byte[] responseBytes = jsonString.getBytes(StandardCharsets.UTF_8);
@@ -487,13 +477,9 @@ public class Main {
 
     private static void sendJsonResponse(HttpExchange exchange, JSONObject jsonResponse, int statusCode) throws IOException {
         String responseString = jsonResponse.toString();
-
-        System.out.println(responseString);
-
         exchange.getResponseHeaders().set("Content-Type", "application/json");
-        System.out.println("200" + " " + responseString);
+        System.out.println(statusCode + " " + responseString);
         exchange.sendResponseHeaders(statusCode, responseString.getBytes(StandardCharsets.UTF_8).length);
-
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(responseString.getBytes(StandardCharsets.UTF_8));
         }

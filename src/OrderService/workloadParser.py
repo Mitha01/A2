@@ -238,7 +238,6 @@ def main():
 
         if command["service"] == "ORDER":
             del command["service"]
-            print(order_url, command)
             response = session.post(order_url, json=command)
             ResponseBody(response)
 

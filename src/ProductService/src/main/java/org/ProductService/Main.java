@@ -90,8 +90,8 @@ public class Main {
     //Creates User Database
     private static void createProductTable() {
         String sql = "CREATE TABLE IF NOT EXISTS Products (\n"
-                + " id INTEGER PRIMARY KEY,\n"
-                + " name TEXT,\n"
+                + " id INTEGER PRIMARY KEY UNIQUE,\n"
+                + " name TEXT UNIQUE,\n"
                 + " description TEXT,\n"
                 + " price DECIMAL(10,2) ,\n"
                 + " qty INTEGER \n"
@@ -211,6 +211,7 @@ public class Main {
                         return;
                     }
                     if (id != null) {
+                        System.out.println("HERE - UPDDATE");
                         int currentQty = getCurrentProductQty(id);
                         Integer orderQty = 0;
 
@@ -327,14 +328,16 @@ public class Main {
         String path = exchange.getRequestURI().getPath();
         String [] pathSegments = path.split("/");
 
+        System.out.println(pathSegments);
+        System.out.println(pathSegments.length);
+
         if(pathSegments.length > 3){
             try {
-
                 int id = Integer.parseInt(pathSegments[2]);
                 int orderQty = Integer.parseInt(pathSegments[3]);
                 int currentQty = 0;
 
-                // sendProductInfo(exchange, id, orderQty, currentQty);
+                sendProductInfo(exchange, id, orderQty, currentQty);
 
             } catch (Exception e) {
                 System.out.println("500: Internal Server Error");

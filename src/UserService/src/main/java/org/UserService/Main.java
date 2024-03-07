@@ -35,16 +35,6 @@ public class Main {
         setupServer();
         setupDatabase();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                try (Statement statement = connection.createStatement()) {
-                    statement.execute("DELETE FROM Users"); // Adjust table name and query as necessary
-                    statement.execute("DELETE FROM Purchases"); // Adjust table name and query as necessary
-                }
-            } catch (Exception e) {
-                System.err.println("Failed to clear users and purchases information: " + e.getMessage());
-            }
-        }));
     }
 
     //SETTING UP SERVER FOR USER SERVICE

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -66,70 +67,76 @@ public class Main {
         public void handle(HttpExchange exchange) throws IOException {
             // handling placing orders
             if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    JSONObject jsonObject = getObject(exchange);
+                    System.out.println(jsonObject);
 
-                JSONObject jsonObject = getObject(exchange);
-                System.out.println(jsonObject);
+                    //String params = String.valueOf(jsonObject.getInt("user_id")) + "/" + String.valueOf(jsonObject.getInt("product_id")) + "/" + String.valueOf(jsonObject.getInt("qty"));
+                    String userIscsUrl = iscsUrl + "user/get/" + jsonObject.getInt("user_id");
+                    String productIscsUrl = iscsUrl + "product/" + jsonObject.getInt("product_id") + "/" + jsonObject.getInt("qty");
 
-                //String params = String.valueOf(jsonObject.getInt("user_id")) + "/" + String.valueOf(jsonObject.getInt("product_id")) + "/" + String.valueOf(jsonObject.getInt("qty"));
-                String userIscsUrl = iscsUrl + "user/get/" + jsonObject.getInt("user_id");
-                String productIscsUrl = iscsUrl + "product/" + jsonObject.getInt("product_id") + "/" + jsonObject.getInt("qty");
+                    HttpResponse userResponse = handleGetRequest(userIscsUrl);
+                    HttpResponse prodResponse = handleGetRequest(productIscsUrl);
 
-                HttpResponse userResponse = handleGetRequest(userIscsUrl);
-                HttpResponse prodResponse = handleGetRequest(productIscsUrl);
+                    // System.out.println(prodResponse.getStatusLine().getStatusCode());
 
-                // System.out.println(prodResponse.getStatusLine().getStatusCode());
+                    Boolean uR = (userResponse != null && userResponse.getStatusLine().getStatusCode() == 200);
+                    Boolean pR = (prodResponse != null && prodResponse.getStatusLine().getStatusCode() == 200);
 
-                Boolean uR = (userResponse != null && userResponse.getStatusLine().getStatusCode() == 200);
-                Boolean pR = (prodResponse != null && prodResponse.getStatusLine().getStatusCode() == 200);
+                    System.out.println(jsonObject.getInt("user_id"));
 
-                System.out.println(jsonObject.getInt("user_id"));
+                    System.out.println(uR);
+                    System.out.println(pR);
 
-                System.out.println(uR);
-                System.out.println(pR);
+                    if (uR && pR) {
+                        JSONObject productUpdateObject = new JSONObject();
+                        JSONObject userPurchaseObject = new JSONObject();
 
-                if (uR && pR) {
-                    JSONObject productUpdateObject = new JSONObject();
-                    JSONObject userPurchaseObject = new JSONObject();
+                        userPurchaseObject.put("command", "place");
+                        userPurchaseObject.put("id", jsonObject.getInt("user_id"));
+                        userPurchaseObject.put("product_id", jsonObject.getInt("product_id"));
+                        userPurchaseObject.put("qty", jsonObject.getInt("qty"));
 
-                    userPurchaseObject.put("command", "place");
-                    userPurchaseObject.put("id", jsonObject.getInt("user_id"));
-                    userPurchaseObject.put("product_id", jsonObject.getInt("product_id"));
-                    userPurchaseObject.put("qty", jsonObject.getInt("qty"));
+                        productUpdateObject.put("id", jsonObject.getInt("product_id"));
+                        productUpdateObject.put("qty", jsonObject.getInt("qty"));
+                        productUpdateObject.put("command", "update");
 
-                    productUpdateObject.put("id", jsonObject.getInt("product_id"));
-                    productUpdateObject.put("qty", jsonObject.getInt("qty"));
-                    productUpdateObject.put("command", "update");
+                        HttpResponse uResponse = handlePostRequest(iscsUrl + "/user", userPurchaseObject);
+                        System.out.println("ORDER CREATION:" + uResponse);
 
-                    HttpResponse uResponse = handlePostRequest(iscsUrl + "/user", userPurchaseObject);
-                    System.out.println("ORDER CREATION:" + uResponse);
-                    assert uResponse != null;
-                    String uResponseContent = EntityUtils.toString(uResponse.getEntity());
+                        assert uResponse != null && uResponse.getStatusLine().getStatusCode() == 200;
+                        String uResponseContent = EntityUtils.toString(uResponse.getEntity());
 
-                    HttpResponse productResponse = handlePostRequest(iscsUrl + "/product", productUpdateObject);
-                    int statusPCode = productResponse.getStatusLine().getStatusCode();
-                    System.out.println("ORDER CREATION:" + productResponse);
+                        HttpResponse productResponse = handlePostRequest(iscsUrl + "/product", productUpdateObject);
+                        int statusPCode = productResponse.getStatusLine().getStatusCode();
+                        System.out.println("ORDER CREATION:" + productResponse);
 
-                    assert productResponse != null;
-                    String productResponseContent = EntityUtils.toString(productResponse.getEntity());
+                        assert productResponse != null && productResponse.getStatusLine().getStatusCode() == 200;
+                        String productResponseContent = EntityUtils.toString(productResponse.getEntity());
 
-                    // Send the productResponse content back
-                    exchange.sendResponseHeaders(200, uResponseContent.getBytes(StandardCharsets.UTF_8).length);
-                    exchange.sendResponseHeaders(200, productResponseContent.getBytes(StandardCharsets.UTF_8).length);
+                        // Send the productResponse content back
+                        exchange.sendResponseHeaders(200, uResponseContent.getBytes(StandardCharsets.UTF_8).length);
+                        exchange.sendResponseHeaders(200, productResponseContent.getBytes(StandardCharsets.UTF_8).length);
 
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(uResponseContent.getBytes(StandardCharsets.UTF_8));
-                        os.write(productResponseContent.getBytes(StandardCharsets.UTF_8));
+                        try (OutputStream os = exchange.getResponseBody()) {
+                            os.write(uResponseContent.getBytes(StandardCharsets.UTF_8));
+                            os.write(productResponseContent.getBytes(StandardCharsets.UTF_8));
+                        }
+                    } else {
+                        //check to prodResponse and userResponse for accurate response back
+                        System.out.println(uR);
+                        System.out.println(pR);
+                        String response = "Error in finding data";
+                        exchange.sendResponseHeaders(404, response.length());
+                        try (OutputStream os = exchange.getResponseBody()) {
+                            os.write(response.getBytes(StandardCharsets.UTF_8));
+                        }
                     }
-                } else {
-                    //check to prodResponse and userResponse for accurate response back
-                    String response = "Error in finding data";
-                    exchange.sendResponseHeaders(404, response.length());
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(response.getBytes(StandardCharsets.UTF_8));
-                    }
+                } catch (NoHttpResponseException e){
+                    System.out.println(e.getMessage());
+                    exchange.sendResponseHeaders(404, -1);
                 }
-            }
-            else if ("GET".equals(exchange.getRequestMethod())) {
+            } else if ("GET".equals(exchange.getRequestMethod())) {
                 orderServiceShutdown(exchange);
             } else {
                 // Send a 405 Method Not Allowed response for non-POST requests

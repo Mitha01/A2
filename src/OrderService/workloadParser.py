@@ -6,14 +6,19 @@ import requests
 import simplejson as json
 import subprocess
 
-shutdown_flag_file = "/Users/susmi/Desktop/SCHOOL/CSC301/a1/src/OrderService/shutdown_status.txt"
+from pathlib import Path
+
+
+shutdown_flag_file = Path(__file__).resolve().parent / "shutdown_status.txt"
 
 def write_shutdown_status():
-    with open('shutdown_status.txt', 'w') as file:
-        file.write(1)
+    if shutdown_flag_file.exists():
+        with open(shutdown_flag_file, "w") as file:
+           file.write("1")
+    return False
 
 def check_shutdown_flag():
-    if os.path.exists(shutdown_flag_file):
+    if shutdown_flag_file.exists():
         with open(shutdown_flag_file, "r") as file:
             flag = file.read().strip()
             return flag == "1"
@@ -34,9 +39,9 @@ def parse_order_line(line):
     return {
         "service": "ORDER",
         "command": "place",
-        "product_id": int(parts[2]),
-        "user_id": int(parts[3]),
-        "qty": int(parts[4])
+        "product_id": int(parts[1]),
+        "user_id": int(parts[2]),
+        "qty": int(parts[3])
     }
 
 
@@ -105,7 +110,7 @@ def parse_user_line(line):
             }
 
     if parts[1] == "update":
-        return {
+        user_info = {
             "service": "USER",
             "command": "update",
             "id": int(parts[2])
@@ -195,8 +200,6 @@ def ResponseBody(response):
 
 
 def main():
-    shutdown_flag = check_shutdown_flag()
-
     statusCode_messages = {200: "OK", 400: "Bad Request", 404:"Not Found", 405:"Not Allowed", 409:"Conflict", 500:"Internal Server Error"}
 
     # Construct the path to the config.json file
@@ -221,15 +224,17 @@ def main():
 
 
     for command in commands:
+        shutdown_flag = check_shutdown_flag()
+
         response = ""
-
         if command["service"] != "restart" and shutdown_flag:
-
+            print("HERE")
             restart_iscs_url_for_product = iscs_url + "/product/restart"
             restart_iscs_url_for_user = iscs_url + "/user/restart"
 
             response1 = session.get(restart_iscs_url_for_user)
             response2 = session.get(restart_iscs_url_for_product)
+            reset_shutdown_flag();
 
         if command["service"] == "ORDER":
             del command["service"]
@@ -277,7 +282,6 @@ def main():
             if shutdown_flag:
                 reset_shutdown_flag();
                 print('{"command": "restart"}, 200 OK status code')
-                return
             else:
                 restart_iscs_url_for_product = iscs_url + "/product/restart"
                 restart_iscs_url_for_user = iscs_url + "/user/restart"

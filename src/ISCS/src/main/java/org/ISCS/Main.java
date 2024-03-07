@@ -162,14 +162,17 @@ public class Main {
                     System.out.println("PRODUCT RESTART");
                     String command = pathSegments[2]; // this would be "shutdown"
 
+                    System.out.println(command);
+
                     String productShutdownUrl = productUrl + "product/" + command;
                     System.out.println(productShutdownUrl);
                     HttpResponse productShutdownResponse = handleGetRequest(productShutdownUrl);
-                    sendValidResponse(exchange, productShutdownResponse);
 
-                    if(command == "shutdown"){
+                    if(command.equals("shutdown")){
+                        System.out.println("IN SHUTDOWN");
                         iscsShutdown();
                     }
+                    sendValidResponse(exchange, productShutdownResponse);
                 }
             }
             else {
@@ -181,7 +184,6 @@ public class Main {
     }
 
     public static void iscsShutdown() throws IOException {
-
         System.out.println("IN SHUTDOWN");
         System.out.println("Shutdown command received. Initiating shutdown...");
 

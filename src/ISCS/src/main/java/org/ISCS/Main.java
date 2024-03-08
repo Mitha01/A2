@@ -78,18 +78,22 @@ public class Main {
         public void handle(HttpExchange exchange) throws IOException {
             // POST request for /user
             if ("POST".equals(exchange.getRequestMethod())) {
+                System.out.println("Enter User Post ");
                 JSONObject jsonObject = getObject(exchange);
+                System.out.println("Got User Post Object");
+                System.out.println(jsonObject);
 
                 String userPostUrl = userUrl + "user";
 
+
                 HttpResponse postResponse = handlePostRequest(userPostUrl, jsonObject);
+                System.out.println(postResponse);
                 // Send a response back
                 sendValidResponse(exchange, postResponse);
 
             } else if ("GET".equals(exchange.getRequestMethod())) {
                 String path = exchange.getRequestURI().getPath();
                 String[] pathSegments = path.split("/");
-
 
                 // Assuming the path is in the format "/user/get/<id>"
                 if (pathSegments.length > 3) {
@@ -112,7 +116,7 @@ public class Main {
 
                 } else {
                     // Send a 405 Method Not Allowed response for non-POST requests
-                    exchange.sendResponseHeaders(405, 0);
+                    exchange.sendResponseHeaders(400, 0);
                     exchange.close();
                 }
             }
@@ -125,10 +129,13 @@ public class Main {
             // POST request for /product
             if ("POST".equals(exchange.getRequestMethod())) {
                 JSONObject jsonObject = getObject(exchange);
+                System.out.println(jsonObject);
 
                 String productPostUrl = productUrl + "product";
+                System.out.println(productPostUrl);
 
                 HttpResponse postResponse = handlePostRequest(productPostUrl, jsonObject);
+
                 // Send a response back
                 sendValidResponse(exchange, postResponse);
 
@@ -139,7 +146,6 @@ public class Main {
                 if (pathSegments.length > 3) {
                     String productId = pathSegments[2];  // Get the product ID
                     String qty = pathSegments[3]; //Get the qty number
-
 
                     String productGetUrl = productUrl + "product/" + productId + "/" + qty;
 
@@ -161,7 +167,7 @@ public class Main {
             }
             else {
                 // Send a 405 Method Not Allowed response for non-POST requests
-                exchange.sendResponseHeaders(405, 0);
+                exchange.sendResponseHeaders(400, 0);
                 exchange.close();
             }
         }

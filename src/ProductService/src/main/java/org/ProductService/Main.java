@@ -111,16 +111,18 @@ public class Main {
         public void handle(HttpExchange exchange) throws IOException {
             try {
                 String method = exchange.getRequestMethod();
-
                 if ("POST".equals(method)) {
+                    System.out.println("1");
                     Map<String, Object> jsonMap = parseJsonStringToMap(getRequestBody(exchange));
+                    System.out.println("2");
+                    System.out.println(jsonMap);
                     handlePostRequest(exchange, jsonMap);
 
                 } else if ("GET".equals(method)) {
                     handleGetRequest(exchange);
 
                 } else {
-                    exchange.sendResponseHeaders(500, -1);
+                    exchange.sendResponseHeaders(400, -1);
                 }
             } finally {
                 exchange.close();
@@ -173,8 +175,7 @@ public class Main {
                 case "create":
                     if (id != null && name != null && description != null && price != null && qty != null) {
                         if (checkProductExists(id)) {
-                            System.out.println("400: Bad Request");
-                            exchange.sendResponseHeaders(400, -1);
+                            exchange.sendResponseHeaders(409, -1);
                             break;
                         }
                         else{
@@ -193,20 +194,18 @@ public class Main {
 
 
                             } catch (SQLException e) {
-                                System.out.println("500: Internal Server Error");
                                 exchange.sendResponseHeaders(500, -1);
                             }
                         }
 
                     }
                     else{
-                        System.out.println("400: Bad Request");
                         exchange.sendResponseHeaders(400, -1);
                     }
                     break;
                 case "update":
+                    System.out.println("HERE");
                     if(!checkProductExists(id)){
-                        System.out.println("404: Not Found");
                         exchange.sendResponseHeaders(404, -1);
                         return;
                     }
@@ -215,7 +214,6 @@ public class Main {
                         Integer orderQty = 0;
 
                         if (currentQty < 0) {
-                            System.out.println("400: Bad Request");
                             exchange.sendResponseHeaders(400, -1); // Product not found
                             return;
                         }
@@ -225,6 +223,8 @@ public class Main {
                         }
 
                         if (orderQty != null && currentQty >= orderQty) {
+                            System.out.println("HERE");
+                            System.out.println(orderQty);
                             orderQty = currentQty - orderQty;
                         }
 
@@ -247,11 +247,11 @@ public class Main {
                             sqlBuilder.append("qty = ?, ");
                             parameters.add(orderQty);
                         }
+                        System.out.println(jsonMap);
 
                         if (!parameters.isEmpty()) {
                             sqlBuilder.delete(sqlBuilder.length() - 2, sqlBuilder.length());
                         } else {
-                            System.out.println("Bad Request");
                             exchange.sendResponseHeaders(400, -1);
                             return;
                         }
@@ -266,18 +266,16 @@ public class Main {
 
                             int affectedRows = pstmt.executeUpdate();
                             if (affectedRows > 0) {
+                                System.out.println("SENDING SUCCESS MESSAGE");
                                 sendValidResponse(exchange, id);
                             } else {
-                                System.out.println("409: Conflict");
-                                exchange.sendResponseHeaders(409, -1);
+                                exchange.sendResponseHeaders(400, -1);
                             }
                         } catch (SQLException e) {
-                            System.out.println("500: Internal Server Error");
                             exchange.sendResponseHeaders(500, -1);
                         }
                     }
                     else{
-                        System.out.println("404: Not Found");
                         exchange.sendResponseHeaders(404, -1);
                     }
                     break;
@@ -290,31 +288,25 @@ public class Main {
                             try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
                                 pstmt.setInt(1, id); // Set the value of the first parameter (the user's ID)
                                 pstmt.executeUpdate();
-                                System.out.println("200: OK");
                                 exchange.sendResponseHeaders(200, -1);
 
                             } catch (SQLException e) {
 
-                                System.out.println("500: Internal Server Error");
                                 exchange.sendResponseHeaders(500, -1);
                             }
                         }
                         else{
-                            System.out.println("404: Not Found");
                             exchange.sendResponseHeaders(404, -1);
                         }
                     } else {
-                        System.out.println("400: Bad Request");
                         exchange.sendResponseHeaders(400, -1);
                     }
                     break;
                 default:
-                    System.out.println("400: Bad Request");
                     exchange.sendResponseHeaders(400, -1);
                     break;
             }
         } catch (Exception e) {
-            System.out.println("500: Internal Server Error");
             exchange.sendResponseHeaders(500, -1);
         } finally {
             exchange.close();
@@ -335,7 +327,6 @@ public class Main {
                 sendProductInfo(exchange, id, orderQty, currentQty);
 
             } catch (Exception e) {
-                System.out.println("500: Internal Server Error");
                 exchange.sendResponseHeaders(500, -1);
             } finally {
                 exchange.close();
@@ -404,15 +395,13 @@ public class Main {
                 }
 
             } catch (SQLException e) {
-                System.out.println("500: Internal Server Error");
                 exchange.sendResponseHeaders(500, -1);
             }
-            if(orderQty < currentQty) {
+            if(orderQty < currentQty && orderQty > 0) {
                 JSONObject jsonObject = new JSONObject(productData);
                 sendJsonResponse(exchange, jsonObject, 200);
             }
             else{
-                System.out.println("400: Bad Request");
                 exchange.sendResponseHeaders(400, -1);
             }
         }
@@ -438,7 +427,6 @@ public class Main {
 
         } catch (SQLException e) {
             // Handle any SQL exceptions
-            System.out.println("500: Internal Server Error");
             exchange.sendResponseHeaders(500, -1);
         }
         JSONObject jsonObject = new JSONObject(Data);

@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLOutput;
+import java.util.UUID;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -69,6 +70,7 @@ public class Main {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
                     JSONObject jsonObject = getObject(exchange);
+                    System.out.println(jsonObject);
 
                     //String params = String.valueOf(jsonObject.getInt("user_id")) + "/" + String.valueOf(jsonObject.getInt("product_id")) + "/" + String.valueOf(jsonObject.getInt("qty"));
                     String userIscsUrl = iscsUrl + "user/get/" + jsonObject.getInt("user_id");
@@ -94,44 +96,45 @@ public class Main {
                         productUpdateObject.put("command", "update");
 
                         HttpResponse uResponse = handlePostRequest(iscsUrl + "/user", userPurchaseObject);
-                        System.out.println("ORDER CREATION:" + uResponse);
-
                         assert uResponse != null && uResponse.getStatusLine().getStatusCode() == 200;
+                        int statusUCode = uResponse.getStatusLine().getStatusCode();
                         String uResponseContent = EntityUtils.toString(uResponse.getEntity());
 
                         HttpResponse productResponse = handlePostRequest(iscsUrl + "/product", productUpdateObject);
-                        int statusPCode = productResponse.getStatusLine().getStatusCode();
-                        System.out.println("ORDER CREATION:" + productResponse);
-
                         assert productResponse != null && productResponse.getStatusLine().getStatusCode() == 200;
+                        int statusPCode = productResponse.getStatusLine().getStatusCode();
                         String productResponseContent = EntityUtils.toString(productResponse.getEntity());
 
-                        // Send the productResponse content back
-                        exchange.sendResponseHeaders(200, uResponseContent.getBytes(StandardCharsets.UTF_8).length);
-                        exchange.sendResponseHeaders(200, productResponseContent.getBytes(StandardCharsets.UTF_8).length);
+                        System.out.println(statusUCode);
+                        System.out.println(statusPCode);
 
-                        try (OutputStream os = exchange.getResponseBody()) {
-                            os.write(uResponseContent.getBytes(StandardCharsets.UTF_8));
-                            os.write(productResponseContent.getBytes(StandardCharsets.UTF_8));
+                        if(statusUCode == 200 && statusPCode == 200){
+                            jsonObject.put("id", UUID.randomUUID());
+                            jsonObject.put("status", "Success");
+                            sendJsonResponse(exchange, jsonObject, 200);
+                        } else {
+                            jsonObject.put("id", UUID.randomUUID());
+                            jsonObject.put("status", "Invalid Request");
+                            sendJsonResponse(exchange, jsonObject, 404);
                         }
+                    } else if (uR && !pR){
+                        jsonObject.put("id", UUID.randomUUID());
+                        jsonObject.put("status", "Exceeded qty limit");
+                        sendJsonResponse(exchange, jsonObject, 400);
                     } else {
-                        //check to prodResponse and userResponse for accurate response back
-                        exchange.sendResponseHeaders(404, response.length());
-                        try (OutputStream os = exchange.getResponseBody()) {
-                            os.write(response.getBytes(StandardCharsets.UTF_8));
-                        }
+                        jsonObject.put("id", UUID.randomUUID());
+                        jsonObject.put("status", "Invalid Request");
+                        sendJsonResponse(exchange, jsonObject, 404);
                     }
                 } catch (NoHttpResponseException e){
-                    System.out.println(e.getMessage());
-                    exchange.sendResponseHeaders(404, -1);
+                    exchange.sendResponseHeaders(400, -1);
                 }
             } else if ("GET".equals(exchange.getRequestMethod())) {
                 orderServiceShutdown(exchange);
             } else {
-                // Send a 405 Method Not Allowed response for non-POST requests
-                exchange.sendResponseHeaders(405, -1); // -1 indicates no response body
-                exchange.close();
+                exchange.sendResponseHeaders(400, -1);
             }
+            exchange.close();
         }
 
         private static void orderServiceShutdown(HttpExchange exchange) throws IOException {
@@ -204,11 +207,20 @@ public class Main {
                 return httpClient.execute(postRequest);
             } catch (IOException e) {
                 e.printStackTrace();
-                // Handle exception
                 return null;
             }
         }
 
+        private static void sendJsonResponse(HttpExchange exchange, JSONObject jsonResponse, int statusCode) throws IOException {
+            String responseString = jsonResponse.toString();
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            System.out.println(statusCode + " " + responseString);
+            exchange.sendResponseHeaders(statusCode, responseString.getBytes(StandardCharsets.UTF_8).length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(responseString.getBytes(StandardCharsets.UTF_8));
+            }
+        }
 
     }
-}
+}//End of Class
+

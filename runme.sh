@@ -1,6 +1,17 @@
 #!/bin/bash
 
 function compile_all {
+  #excutable
+  chmod +x runme.sh
+
+  # Check Maven installation
+    if ! command -v mvn &> /dev/null
+    then
+        echo "Maven could not be found. Attempting to install..."
+        # Install Maven - adjust this command based on your OS or package manager
+        sudo apt-get install maven -y || sudo yum install maven -y || brew install maven
+    fi
+
   # Check for the existence of the compiled/ folder and create it if it doesn't exist
   mkdir -p compiled/
   mkdir -p compiled/OrderService

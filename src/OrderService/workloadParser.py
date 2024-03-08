@@ -191,16 +191,14 @@ def parse_file(file_path):
     return commands
 
 def ResponseBody(response):
-    statusCode_messages = {200: "OK", 400: "Bad Request", 404:"Not Found", 405:"Not Allowed", 409:"Conflict", 500:"Internal Server Error"}
+    statusCode_messages = {200: "OK", 400: "Bad Request", 404:"Not Found", 405:"Not Allowed", 409:"ID Already In Use", 500:"Internal Server Error"}
     status_message = statusCode_messages[response.status_code]
     status_code = response.status_code
 
     print(f"{status_code}:{status_message}", response.text)
 
 
-
 def main():
-    statusCode_messages = {200: "OK", 400: "Bad Request", 404:"Not Found", 405:"Not Allowed", 409:"Conflict", 500:"Internal Server Error"}
 
     # Construct the path to the config.json file
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -222,13 +220,11 @@ def main():
     commands = parse_file(file_path)
     session = requests.Session()
 
+    shutdown_flag = check_shutdown_flag()
 
     for command in commands:
-        shutdown_flag = check_shutdown_flag()
-
         response = ""
         if command["service"] != "restart" and shutdown_flag:
-            print("HERE")
             restart_iscs_url_for_product = iscs_url + "/product/restart"
             restart_iscs_url_for_user = iscs_url + "/user/restart"
 
@@ -275,19 +271,16 @@ def main():
 
             if response1.status_code == 200 and response2.status_code == 200 and response3.status_code == 200:
                 print('{"command": "shutdown"}, 200 OK status code')
+            else:
+                print('{"command": "shutdown"}, Failed to shutdown)')
             return
 
         elif command["service"] == "restart":
             if shutdown_flag:
-                reset_shutdown_flag();
+                reset_shutdown_flag()
                 print('{"command": "restart"}, 200 OK status code')
             else:
-                restart_iscs_url_for_product = iscs_url + "/product/restart"
-                restart_iscs_url_for_user = iscs_url + "/user/restart"
-
-                response1 = session.get(restart_iscs_url_for_user)
-                response2 = session.get(restart_iscs_url_for_product)
-                return
+                print('{"command": "restart"}, 400 Bad Request status code')
 
 if __name__ == "__main__":
     main()

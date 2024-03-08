@@ -1,7 +1,3 @@
-USER create 1 usernameKPTgmeH 36a9@hbCa.com gOmaQKKw
-PRODUCT create 4 productname-2df398 productThree 3.99 32
-PRODUCT create 5 productname-j832dk9 productThree 3.99 11
-ORDER 4 1 29
 USER create 2 usernameFw5hdTh CYDJ@vMLrNA.com GMmhdr6J
 USER get 2
 USER purchased 1

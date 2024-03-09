@@ -4,14 +4,6 @@ function compile_all {
   #excutable
   chmod +x runme.sh
 
-  # Check Maven installation
-    if ! command -v mvn &> /dev/null
-    then
-        echo "Maven could not be found. Attempting to install..."
-        # Install Maven - adjust this command based on your OS or package manager
-        sudo apt-get install maven -y || sudo yum install maven -y || brew install maven
-    fi
-
   # Check for the existence of the compiled/ folder and create it if it doesn't exist
   mkdir -p compiled/
   mkdir -p compiled/OrderService
@@ -19,31 +11,34 @@ function compile_all {
   mkdir -p compiled/ProductService
   mkdir -p compiled/ISCS
 
-  # Compile everything, move JAR files to the compiled directory, and delete non-dependency JARs
-  (cd src/OrderService && mvn clean package && cp target/*-jar-with-dependencies.jar ../../compiled/OrderService/ && rm -f target/*-SNAPSHOT.jar)
-  (cd src/UserService && mvn clean package && cp target/*-jar-with-dependencies.jar ../../compiled/UserService/ && rm -f target/*-SNAPSHOT.jar)
-  (cd src/ProductService && mvn clean package && cp target/*-jar-with-dependencies.jar ../../compiled/ProductService/ && rm -f target/*-SNAPSHOT.jar)
-  (cd src/ISCS && mvn clean package && cp target/*-jar-with-dependencies.jar ../../compiled/ISCS/ && rm -f target/*-SNAPSHOT.jar)
+  # Install workload parser dependency
+  pip install simplejson
+
+  # Compile everything
+  javac ".\src\UserService\Main.java" -cp ".\compiled\json-20231013.jar" -d ".\compiled"
+  javac ".\src\ProductService\Main.java" -cp ".\compiled\json-20231013.jar" -d ".\compiled"
+  javac ".\src\ISCS\Main.java" -cp ".\compiled\json-20231013.jar;.\compiled\httpclient-4.5.14.jar;.\compiled\httpcore-4.4.16.jar" -d ".\compiled"
+  javac ".\src\OrderService\Main.java" -cp ".\compiled\json-20231013.jar;.\compiled\httpclient-4.5.14.jar;.\compiled\httpcore-4.4.16.jar" -d ".\compiled"
 }
 
  # Start the UserService
 function start_user_service {
-  java -jar compiled/UserService/UserService-1.0-SNAPSHOT-jar-with-dependencies.jar
+  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\sqlite-jdbc-3.35.0.jar:.\compiled\slf4j-api-2.0.11.jar" UserService.Main
 }
 
 # Start the ProductService
 function start_product_service {
-  java -jar compiled/ProductService/ProductService-1.0-SNAPSHOT-jar-with-dependencies.jar
+  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\sqlite-jdbc-3.35.0.jar:.\compiled\slf4j-api-2.0.11.jar" ProductService.Main
 }
 
 # Start the ISCS
 function start_iscs {
-  java -jar compiled/ISCS/ISCS-1.0-SNAPSHOT-jar-with-dependencies.jar
+  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\httpclient-4.5.14.jar:.\compiled\httpcore-4.4.16.jar" ISCS.Main
 }
 
 # Start the OrderService
 function start_order_service {
-  java -jar compiled/OrderService/OrderService-1.0-SNAPSHOT-jar-with-dependencies.jar
+  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\httpclient-4.5.14.jar:.\compiled\httpcore-4.4.16.jar" OrderService.Main
 }
 
 # Start the workload generator with the provided workload file

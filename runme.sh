@@ -15,30 +15,30 @@ function compile_all {
   pip install simplejson
 
   # Compile everything
-  javac ".\src\UserService\Main.java" -cp ".\compiled\json-20231013.jar" -d ".\compiled"
-  javac ".\src\ProductService\Main.java" -cp ".\compiled\json-20231013.jar" -d ".\compiled"
-  javac ".\src\ISCS\Main.java" -cp ".\compiled\json-20231013.jar;.\compiled\httpclient-4.5.14.jar;.\compiled\httpcore-4.4.16.jar" -d ".\compiled"
-  javac ".\src\OrderService\Main.java" -cp ".\compiled\json-20231013.jar;.\compiled\httpclient-4.5.14.jar;.\compiled\httpcore-4.4.16.jar" -d ".\compiled"
+  javac "./src/UserService/Main.java" -cp "./compiled/json-20231013.jar" -d "./compiled"
+  javac "./src/ProductService/Main.java" -cp "./compiled/json-20231013.jar" -d "./compiled"
+  javac "./src/ISCS/Main.java" -cp "./compiled/json-20231013.jar:./compiled/httpclient-4.5.14.jar:./compiled/httpcore-4.4.16.jar" -d "./compiled"
+  javac "./src/OrderService/Main.java" -cp "./compiled/json-20231013.jar:./compiled/httpclient-4.5.14.jar:./compiled/httpcore-4.4.16.jar" -d "./compiled"
 }
 
  # Start the UserService
 function start_user_service {
-  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\sqlite-jdbc-3.35.0.jar:.\compiled\slf4j-api-2.0.11.jar" UserService.Main
+  java -cp "./compiled:./compiled/json-20231013.jar:./compiled/sqlite-jdbc-3.35.0.jar:./compiled/slf4j-api-2.0.11.jar" UserService.Main
 }
 
 # Start the ProductService
 function start_product_service {
-  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\sqlite-jdbc-3.35.0.jar:.\compiled\slf4j-api-2.0.11.jar" ProductService.Main
+  java -cp "./compiled:./compiled/json-20231013.jar:./compiled/sqlite-jdbc-3.35.0.jar:./compiled/slf4j-api-2.0.11.jar" ProductService.Main
 }
 
 # Start the ISCS
 function start_iscs {
-  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\httpclient-4.5.14.jar:.\compiled\httpcore-4.4.16.jar" ISCS.Main
+  java -cp "./compiled:./compiled/json-20231013.jar:./compiled/httpclient-4.5.14.jar:./compiled/httpcore-4.4.16.jar" ISCS.Main
 }
 
 # Start the OrderService
 function start_order_service {
-  java -cp ".\compiled:.\compiled\json-20231013.jar:.\compiled\httpclient-4.5.14.jar:.\compiled\httpcore-4.4.16.jar" OrderService.Main
+  java -cp "./compiled:./compiled/json-20231013.jar:./compiled/httpclient-4.5.14.jar:./compiled/httpcore-4.4.16.jar" OrderService.Main
 }
 
 # Start the workload generator with the provided workload file

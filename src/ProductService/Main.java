@@ -78,7 +78,7 @@ public class Main {
     private static void setupDatabase() {
         try {
             Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:/src/ProductService/database/Products.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:src/ProductService/database/Products.db");
             // Create the users table
             createProductTable();
 
